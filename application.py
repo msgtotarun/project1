@@ -1,10 +1,10 @@
 import os
 
-from flask import Flask, session
+from flask import Flask,render_template,request,session
 from flask_session import Session
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
-
+active='active'
 app = Flask(__name__)
 # Check for environment variable
 if not os.getenv("DATABASE_URL"):
@@ -21,4 +21,16 @@ db = scoped_session(sessionmaker(bind=engine))
 
 @app.route("/")
 def index():
-    return "Project 1: TODO"
+    return render_template("index.html",home=active)
+
+@app.route("/register")
+def register():
+     return render_template('register.html',register=active)
+@app.route("/registration",methods=["POST"])
+def registration():
+    name=request.form.get("Username")
+    email=request.form.get("email")
+    password=request.form.get("password")
+    print(name,password,email)
+    return name+" ,"+email
+   
