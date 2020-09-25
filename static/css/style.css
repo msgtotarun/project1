@@ -9,8 +9,18 @@
   padding-top: 70px;
 }
 
+.btn {
+  margin-left: 40%;
+}
+
 h1 {
   color: crimson;
+  text-align: center;
+}
+
+#have-account {
+  margin: 20px;
+  display: block;
   text-align: center;
 }
 /*# sourceMappingURL=style.css.map */

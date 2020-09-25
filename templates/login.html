@@ -1,0 +1,35 @@
+{% extends "layout.html" %}
+{% block title %}Login{% endblock %}
+{% block body %}
+<div class="contain">
+  <h1>Login</h1>
+  <div class="row justify-content-center mt-5">
+    <div class="form-group col-md-4 col-md-offset-5 align-center ">
+      <form action="{{url_for('login') }}" method="post">
+        
+        <div class="mb-3">
+          <label for="Username" class="form-label">Username</label>
+          <input type="text" name="Username" class="form-control" id="Username">
+        </div>
+
+        <div class="mb-3">
+          <label for="exampleInputEmail1" class="form-label">Email address</label>
+          <input type="email" name="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp">
+        </div>
+        
+        <div class="mb-3">
+          <label for="inputPassword5" class="form-label">Password</label>
+          <input type="password" name="password" id="inputPassword5" class="form-control"
+            aria-describedby="passwordHelpBlock">
+        </div>
+        <div class="mb-3 form-check">
+          <input type="checkbox" class="form-check-input" id="exampleCheck1">
+          <label class="form-check-label" for="exampleCheck1">Remember me</label>
+        </div>
+        <button type="submit" class="btn btn-primary mt-3">Login</button>
+        <Span id='have-account'><a href="#">Don't have an Account</a></Span>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
