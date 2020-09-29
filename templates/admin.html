@@ -1,0 +1,26 @@
+{% extends "layout.html" %} {% block title %} admin console {% endblock %} {%
+block body %}
+<div class="contain">
+  <h1>admin</h1>
+  <table class="table text-center text-capitalize">
+    <thead class="table-dark">
+      <tr>
+        <th scope="col">First Name</th>
+        <th scope="col">Email</th>
+        <th scope="col">Password</th>
+        <th scope="col">Time Stamp</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in data %}
+      <tr>
+        <td>{{r.Name}}</td>
+        <td>{{r.Email}}</td>
+        <td>{{r.Password}}</td>
+        <td>{{r.Time_registered}}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
