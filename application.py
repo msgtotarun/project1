@@ -3,7 +3,7 @@ import csv
 import time
 from flask import Flask, render_template, request, redirect, flash, url_for, session
 from flask_session import Session
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, or_
 from sqlalchemy.orm import scoped_session, sessionmaker
 from models import *
 from bookImport import *
@@ -14,33 +14,14 @@ app = Flask(__name__)
 # Check for environment variable
 if not os.getenv("DATABASE_URL"):
     raise RuntimeError("DATABASE_URL is not set")
-app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-db.init_app(app)
-# with app.app_context():
-#     main()
-# Configure session to use filesystem
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 Session(app)
 
 # Set up database
 engine = create_engine(os.getenv("DATABASE_URL"))
 db = scoped_session(sessionmaker(bind=engine))
-
-if not engine.dialect.has_table(engine, "Books"):
-    User.__table__.create(bind=engine, checkfirst=True)
-f = open("./static/books.csv")
-reader = csv.reader(f)
-next(reader)
-for isbn, title, author, year in reader:
-    book = books(isbn=isbn, title=title, author=author, year=year)
-    db.add(book)
-    print(
-        f"added{book.title} with number {book.isbn} written by {book.author} published in the year {book.year}")
-print('sessoin before commited')
-db.commit()
-print('sessoin commited')
 
 
 @app.route("/")
@@ -158,3 +139,17 @@ def loginNow():
     else:
         flash("account does not exist register now", "danger")
         return redirect(url_for('register'))
+
+
+@ app.route("/search/<user>", methods=["POST", "GET"])
+def search(user):
+    if request.method == "GET":
+        # return render_template("Search.html", user = user)
+        return redirect(url_for('index'))
+
+    else:
+        res = request.form.get("data")
+        res = '%'+res+'%'
+        result = db.query(books).filter(or_(books.title.ilike(
+            res), books.author.ilike(res), books.isbn.ilike(res))).all()
+        return render_template("index.html", result=result, user=user)
