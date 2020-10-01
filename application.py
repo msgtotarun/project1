@@ -10,6 +10,8 @@ from bookImport import *
 active = 'active'
 data = []
 app = Flask(__name__)
+if __name__ == '__main__':
+    app.run()
 
 # Check for environment variable
 if not os.getenv("DATABASE_URL"):
