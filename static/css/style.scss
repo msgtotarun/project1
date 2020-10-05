@@ -26,3 +26,30 @@ h1 {
 .search {
   margin-left: 20px;
 }
+.review-text {
+  margin-top: 20px;
+}
+.review-text textarea {
+  width: 75vh;
+  height: 30vh;
+  padding: 10px;
+}
+.reviews {
+  margin-bottom: 10px;
+}
+.review {
+  position: relative;
+  margin: 10px;
+  padding: 20px;
+}
+#name {
+  margin-right: 15%;
+}
+#msg {
+  position: absolute;
+  padding-top: 20px;
+}
+.review-div {
+  width: min-content;
+  margin: auto;
+}

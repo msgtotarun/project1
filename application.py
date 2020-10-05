@@ -6,7 +6,8 @@ from flask_session import Session
 from sqlalchemy import create_engine, or_
 from sqlalchemy.orm import scoped_session, sessionmaker
 from models import *
-from bookImport import *
+import requests
+import json
 active = 'active'
 data = []
 app = Flask(__name__)
@@ -65,10 +66,6 @@ def admin():
 
 @app.route("/registration", methods=["POST"])
 def registration():
-    # Get table information
-    # If table don't exist, Create.
-    if not engine.dialect.has_table(engine, "USERS"):
-        User.__table__.create(bind=engine, checkfirst=True)
     rowName = ['Name', 'Username', 'Email', 'Password', 'RPassword', 'check']
     row = []
     for i in rowName:
@@ -84,7 +81,7 @@ def registration():
         return render_template('register.html', register=active)
     Uname = db.query(User).filter_by(Username=row[1]).first()
     email = db.query(User).filter_by(Email=row[2]).first()
-    # print(Uname)
+    print(Uname)
     if(Uname != None and Uname.Username == row[1]):
         flash('username already exist', 'warning')
         return render_template('register.html', register=active)
@@ -92,19 +89,19 @@ def registration():
         flash('Email already exist', 'warning')
         return render_template('register.html', register=active)
 
-        user = User(Name=row[0], Username=row[1], Email=row[2],
-                    Password=row[3], Time_registered=time.ctime(time.time()))
-        try:
-            db.add(user)
-            db.commit()
-            flash(f"HI {row[0]} account created sucessfully", 'success')
-        except:
-            # e = sys.exc_info()
-            # print(e)
-            flash("please fill all details or error occured", 'danger')
-        finally:
-            db.remove()
-            db.close()
+    user = User(Name=row[0], Username=row[1], Email=row[2],
+                Password=row[3], Time_registered=time.ctime(time.time()))
+    try:
+        db.add(user)
+        db.commit()
+        flash(f"HI {row[0]} account created sucessfully", 'success')
+    except:
+        # e = sys.exc_info()
+        # print(e)
+        flash("please fill all details or error occured", 'danger')
+    finally:
+        db.remove()
+        db.close()
 
     return render_template('register.html', register=active)
 
@@ -143,10 +140,10 @@ def loginNow():
         return redirect(url_for('register'))
 
 
-@ app.route("/search/<user>", methods=["POST", "GET"])
+@ app.route("/search/<user>", methods=["POST"])
 def search(user):
-    if request.method == "GET":
-        # return render_template("Search.html", user = user)
+    if user not in session:
+        flash('please login first', 'warning')
         return redirect(url_for('index'))
 
     else:
@@ -155,3 +152,50 @@ def search(user):
         result = db.query(books).filter(or_(books.title.ilike(
             res), books.author.ilike(res), books.isbn.ilike(res))).all()
         return render_template("index.html", result=result, user=user)
+
+
+@ app.route("/bookDetails/<user>/<isbn>", methods=["POST", "GET"])
+def bookDetails(user, isbn):
+    if user in session:
+        data = requests.get("https://www.goodreads.com/book/review_counts.json",
+                            params={"key": "QBSkzdFzmInWGWMpZCDycg", "isbns": isbn})
+        book = db.query(books).filter_by(isbn=isbn).first()
+        parsed = json.loads(data.text)
+
+        # print(parsed)
+        res = {}
+        for i in parsed:
+            print(parsed[i])
+            for j in (parsed[i]):
+                # print(f'j,{j}')
+                res = j
+        allreviews = db.query(review).filter_by(isbn=isbn).all()
+        if request.method == "POST":
+            print('pst')
+            rating = request.form.get("rating")
+            reviews = request.form.get("review")
+            timestamp = time.ctime(time.time())
+            reviewtable = review(isbn=isbn, review=reviews, rating=rating,
+                                 time_stamp=timestamp, title=book.title, username=user)
+            db.add(reviewtable)
+            db.commit()
+
+            # Get all the reviews for the given book.
+            allreviews = review.query.filter_by(isbn=isbn).all()
+            return render_template("bookDetails.html", res=res, book=data, review=allreviews, property="none", message="You reviewed this book!!", user=user)
+        else:
+            # database query to check if the user had given review to that paticular book.
+            rev = db.query(review).filter(review.isbn.like(
+                isbn), review.username.like(user)).first()
+            # print(rev)
+
+            # Get all the reviews for the given book.
+            allreviews = db.query(review).filter_by(isbn=isbn).all()
+
+            # if review was not given then dispaly the book page with review button
+            if rev is None:
+                return render_template("bookDetails.html", book=book, res=res, review=allreviews, user=user)
+            return render_template("bookDetails.html", book=book, message="You reviewed this book!!", review=allreviews, res=res, property="none", user=user)
+    else:
+        flash('please login first', 'warning')
+        return redirect(url_for('index'))

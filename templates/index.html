@@ -19,7 +19,7 @@
         <tr>
             <th scope="row"><img src="http://covers.openlibrary.org/b/isbn/{{r.isbn}}-M.jpg" alt={{r.isbn}} width="100"
                     height="150"></th>
-            <td>{{r.isbn}}</td>
+            <td> <a href="{{url_for('bookDetails',isbn=r.isbn,user=user)}}">{{r.isbn}}</a></td>
             <td>{{r.title}}</td>
             <td>{{r.author}}</td>
             <td>{{r.year}}</td>
