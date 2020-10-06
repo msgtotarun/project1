@@ -43,7 +43,10 @@
         {% if user %}
         <ul class="nav navbar-nav ml-auto">
           <li class="nav-item">
-            <a class="nav-link {{logout}}" href="{{url_for('logout',Username=user)}}">Logout</a>
+            <a class="nav-link {{admin}}" href="{{url_for('admin',user=user)}}">admin</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {{logout}}" href="{{url_for('logout')}}">Logout</a>
           </li>
         </ul>
         {% endif%}

@@ -26,18 +26,20 @@ Session(app)
 engine = create_engine(os.getenv("DATABASE_URL"))
 db = scoped_session(sessionmaker(bind=engine))
 
+user = ''
+
 
 @app.route("/")
 def index():
     if 'Username' in session:
-        return redirect(url_for('home'))
+        user = session.get('Username')
+        return redirect(url_for('userHome', user=user))
     return redirect(url_for('login'))
 
 
 @app.route("/home/<user>")
 def userHome(user):
-  #  print(user in session)
-    if user in session:
+    if 'Username' in session:
         return render_template('index.html', user=user)
     return redirect(url_for('login'))
 
@@ -58,57 +60,65 @@ def login():
     return render_template('login.html', login=active)
 
 
-@app.route("/admin")
-def admin():
-    data = db.query(User).order_by(User.Time_registered)
-    return render_template('admin.html', data=data.all())
+@app.route("/admin/<user>")
+def admin(user):
+    id = db.query(User).filter_by(Username=user).first()
+    if(id.id == 1):
+        data = db.query(User).order_by(User.Time_registered)
+        return render_template('admin.html', user=user, data=data.all())
+    flash('please login with admin account', 'warning')
+    return redirect(url_for('userHome', user=user))
 
 
-@app.route("/registration", methods=["POST"])
+@ app.route("/registration", methods=["POST"])
 def registration():
-    rowName = ['Name', 'Username', 'Email', 'Password', 'RPassword', 'check']
-    row = []
-    for i in rowName:
-        s = request.form.get(i)
-        # print(s)
-        if(s == None):
-            flash("please fill all details", 'warning')
+    if 'Username' in session:
+        rowName = ['Name', 'Username', 'Email',
+                   'Password', 'RPassword', 'check']
+        row = []
+        for i in rowName:
+            s = request.form.get(i)
+            # print(s)
+            if(s == None):
+                flash("please fill all details", 'warning')
+                return render_template('register.html', register=active)
+            else:
+                row.append(s)
+        if(row[3] != row[4]):
+            flash(" your password missmatch", 'warning')
             return render_template('register.html', register=active)
-        else:
-            row.append(s)
-    if(row[3] != row[4]):
-        flash(" your password missmatch", 'warning')
+        Uname = db.query(User).filter_by(Username=row[1]).first()
+        email = db.query(User).filter_by(Email=row[2]).first()
+        print(Uname)
+        if(Uname != None and Uname.Username == row[1]):
+            flash('username already exist', 'warning')
+            return render_template('register.html', register=active)
+        elif(email != None and email.Email == row[2]):
+            flash('Email already exist', 'warning')
+            return render_template('register.html', register=active)
+
+        user = User(Name=row[0], Username=row[1], Email=row[2],
+                    Password=row[3], Time_registered=time.ctime(time.time()))
+        try:
+            db.add(user)
+            db.commit()
+            flash(f"HI {row[0]} account created sucessfully", 'success')
+        except:
+            # e = sys.exc_info()
+            # print(e)
+            flash("please fill all details or error occured", 'danger')
+        finally:
+            db.remove()
+            db.close()
         return render_template('register.html', register=active)
-    Uname = db.query(User).filter_by(Username=row[1]).first()
-    email = db.query(User).filter_by(Email=row[2]).first()
-    print(Uname)
-    if(Uname != None and Uname.Username == row[1]):
-        flash('username already exist', 'warning')
-        return render_template('register.html', register=active)
-    elif(email != None and email.Email == row[2]):
-        flash('Email already exist', 'warning')
-        return render_template('register.html', register=active)
 
-    user = User(Name=row[0], Username=row[1], Email=row[2],
-                Password=row[3], Time_registered=time.ctime(time.time()))
-    try:
-        db.add(user)
-        db.commit()
-        flash(f"HI {row[0]} account created sucessfully", 'success')
-    except:
-        # e = sys.exc_info()
-        # print(e)
-        flash("please fill all details or error occured", 'danger')
-    finally:
-        db.remove()
-        db.close()
-
-    return render_template('register.html', register=active)
+    flash("user already exist", 'warning')
+    return redirect(url_for('index'))
 
 
-@app.route("/logout/<Username>")
-def logout(Username):
-    session.pop(Username, None)
+@ app.route("/logout")
+def logout():
+    session.pop('Username', None)
     return redirect(url_for('index'))
 
 
@@ -133,7 +143,7 @@ def loginNow():
     # print(Uname.Password == row[1])
     if(Username != None and Username.Password == row[1]):
         flash("login success", "success")
-        session[row[0]] = Username
+        session[rowName[0]] = row[0]
         return redirect(url_for('userHome', user=row[0]))
     else:
         flash("account does not exist register now", "danger")
@@ -142,7 +152,7 @@ def loginNow():
 
 @ app.route("/search/<user>", methods=["POST"])
 def search(user):
-    if user not in session:
+    if user is session["Username"]:
         flash('please login first', 'warning')
         return redirect(url_for('index'))
 
@@ -156,7 +166,7 @@ def search(user):
 
 @ app.route("/bookDetails/<user>/<isbn>", methods=["POST", "GET"])
 def bookDetails(user, isbn):
-    if user in session:
+    if user is session["Username"]:
         data = requests.get("https://www.goodreads.com/book/review_counts.json",
                             params={"key": "QBSkzdFzmInWGWMpZCDycg", "isbns": isbn})
         book = db.query(books).filter_by(isbn=isbn).first()
