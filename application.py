@@ -72,30 +72,22 @@ def admin(user):
 
 @ app.route("/registration", methods=["POST"])
 def registration():
-    if 'Username' in session:
+    if 'Username' not in session:
         rowName = ['Name', 'Username', 'Email',
                    'Password', 'RPassword', 'check']
         row = []
         for i in rowName:
             s = request.form.get(i)
-            # print(s)
-            if(s == None):
-                flash("please fill all details", 'warning')
-                return render_template('register.html', register=active)
-            else:
-                row.append(s)
-        if(row[3] != row[4]):
-            flash(" your password missmatch", 'warning')
-            return render_template('register.html', register=active)
+            row.append(s)
+            print(s)
         Uname = db.query(User).filter_by(Username=row[1]).first()
         email = db.query(User).filter_by(Email=row[2]).first()
-        print(Uname)
         if(Uname != None and Uname.Username == row[1]):
-            flash('username already exist', 'warning')
-            return render_template('register.html', register=active)
+            flash('username already exist,please login', 'warning')
+            return redirect(url_for('index'))
         elif(email != None and email.Email == row[2]):
-            flash('Email already exist', 'warning')
-            return render_template('register.html', register=active)
+            flash('Email already exist,please login', 'warning')
+            return redirect(url_for('index'))
 
         user = User(Name=row[0], Username=row[1], Email=row[2],
                     Password=row[3], Time_registered=time.ctime(time.time()))
@@ -106,7 +98,7 @@ def registration():
         except:
             # e = sys.exc_info()
             # print(e)
-            flash("please fill all details or error occured", 'danger')
+            flash("error occured", 'danger')
         finally:
             db.remove()
             db.close()
