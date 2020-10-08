@@ -46,6 +46,7 @@ function checkInputs() {
     const passwordValue = password.value.trim();
     const password2Value = password2.value.trim();
     var f = 1
+    let passw = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,20}$/;
     if (name.value === '') {
         setErrorFor(name, 'name cannot be blank');
         f = 0
@@ -55,6 +56,9 @@ function checkInputs() {
 
     if (usernameValue === '') {
         setErrorFor(username, 'Username cannot be blank');
+        f = 0
+    } else if (isEmail(usernameValue)) {
+        setErrorFor(username, 'Username cannot be an Email');
         f = 0
     } else {
         setSuccessFor(Username);
@@ -69,16 +73,13 @@ function checkInputs() {
     } else {
         setSuccessFor(Email);
     }
-
-    if (passwordValue === '') {
-        setErrorFor(Password, 'Password cannot be blank');
-        f = 0
-    } else {
-        setSuccessFor(Password);
-    }
+    if (!passwordValue.match(passw)) {
+        setErrorFor(password, 'password has to be at least 6 characters, with at least one uppercase letter, one lowercase letter, one number and a symbol');
+    } else
+        setSuccessFor(password)
 
     if (password2Value === '') {
-        setErrorFor(RPassword, 'Password cannot be blank');
+        setErrorFor(RPassword, 'Retype Password cannot be blank');
         f = 0
     } else if (passwordValue !== password2Value) {
         setErrorFor(Rpassword, 'Passwords does not match');
@@ -86,6 +87,9 @@ function checkInputs() {
     } else {
         setSuccessFor(Rpassword);
     }
+
+
+
     if (!check.checked) {
         setErrorFor(check, 'agree terms and conditions');
         f = 0
@@ -110,6 +114,6 @@ function setSuccessFor(input) {
     small.innerText = '';
 }
 
-// function isEmail(email) {
-//     return /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(email);
-// }
+function isEmail(email) {
+    return /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(email);
+}
