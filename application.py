@@ -8,6 +8,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 from models import *
 import requests
 import json
+from flask.json import jsonify
 active = 'active'
 data = []
 app = Flask(__name__)
@@ -142,62 +143,163 @@ def loginNow():
         return redirect(url_for('register'))
 
 
-@ app.route("/search/<user>", methods=["POST"])
-def search(user):
-    if user is session["Username"]:
-        flash('please login first', 'warning')
-        return redirect(url_for('index'))
+@app.route("/api/search/", methods=["POST"])
+def search_api():
 
-    else:
-        res = request.form.get("data")
-        res = '%'+res+'%'
-        result = db.query(books).filter(or_(books.title.ilike(
-            res), books.author.ilike(res), books.isbn.ilike(res))).all()
-        return render_template("index.html", result=result, user=user)
+    if request.method == "POST":
+        var = request.json
+
+        res = var["search"]
+        res = "%" + res + "%"
+
+        result = db.query(books).filter(or_(books.title.ilike(res), books.author.ilike(res), books.isbn.ilike(res))
+                                        ).all()
+
+        if result is None:
+            return jsonify({"error": "Book not found"}), 400
+
+        book_ISBN = []
+        book_TITLE = []
+        book_AUTHOR = []
+        book_YEAR = []
+
+        for eachresult in result:
+            book_ISBN.append(eachresult.isbn)
+            book_TITLE.append(eachresult.title)
+            book_AUTHOR.append(eachresult.author)
+            book_YEAR.append(eachresult.year)
+
+        dict = {
+            "isbn": book_ISBN,
+            "title": book_TITLE,
+            "author": book_AUTHOR,
+            "year": book_YEAR,
+        }
+        print("returning")
+        print(dict)
+        return jsonify(dict), 200
+    return "<h1>Come again</h1>"
 
 
-@ app.route("/bookDetails/<user>/<isbn>", methods=["POST", "GET"])
-def bookDetails(user, isbn):
-    if user is session["Username"]:
-        data = requests.get("https://www.goodreads.com/book/review_counts.json",
-                            params={"key": "QBSkzdFzmInWGWMpZCDycg", "isbns": isbn})
+@app.route("/api/book/", methods=["POST"])
+def book_api():
+
+    if request.method == "POST":
+        var = request.json
+        res = var["isbn"]
+        isbn = res
+
         book = db.query(books).filter_by(isbn=isbn).first()
-        parsed = json.loads(data.text)
+        res = requests.get(
+            "https://www.goodreads.com/book/review_counts.json",
+            params={"key": "2VIV9mRWiAq0OuKcOPiA", "isbns": isbn},
+        )
 
-        # print(parsed)
+        # Parsing the data
+        data = res.text
+        parsed = json.loads(data)
+        print(parsed)
         res = {}
         for i in parsed:
-            print(parsed[i])
-            for j in (parsed[i]):
-                # print(f'j,{j}')
+            for j in parsed[i]:
                 res = j
+
         allreviews = db.query(review).filter_by(isbn=isbn).all()
-        if request.method == "POST":
-            print('pst')
-            rating = request.form.get("rating")
-            reviews = request.form.get("review")
+        rew = []
+        time = []
+        usr = []
+        for rev in allreviews:
+            rew.append(rev.review)
+            time.append(rev.time_stamp)
+            usr.append(rev.username)
+
+        if book is None:
+            return jsonify({"error": "Book not found"}), 400
+
+        dict = {
+            "isbn": isbn,
+            "title": book.title,
+            "author": book.author,
+            "year": book.year,
+            "average_rating": res["average_rating"],
+            "average_reviewcount": res["reviews_count"],
+            "review": rew,
+            "time_stamp": time,
+            "username": usr,
+        }
+        return jsonify(dict), 200
+
+
+@app.route("/api/submit_review/", methods=["POST"])
+def review_api():
+    if request.method == "POST":
+
+        var = request.json
+        # print("-------------------", var)
+        isbn = var["isbn"]
+        username = var["username"]
+        rating = var["rating"]
+        reviews = var["reviews"]
+        print(isbn, username, rating, reviews)
+
+        # if "username" and "isbn" in request.args:
+        #     username = request.args["username"]
+        #     isbn = request.args["isbn"]
+        #     rating = request.args["rating"]
+        #     reviews = request.args["review"]
+        # else:
+        #     return "Error: no isbn/username/rating/review/ field provided"
+
+        # check if the paticular user given review before
+        rev_From_db = db.query(review).filter(
+            review.isbn.like(isbn), review.username.like(username)
+        ).first()
+        print("first", str(rev_From_db))
+
+        # if the user doesnt give the review for that book
+        if rev_From_db is None:
+
+            try:
+                # bring the book details
+                book = books.query.filter_by(isbn=isbn).first()
+                print("book", str(book))
+            except:
+                message = "Enter valid ISBN"
+                return jsonify(message), 404
+
             timestamp = time.ctime(time.time())
-            reviewtable = review(isbn=isbn, review=reviews, rating=rating,
-                                 time_stamp=timestamp, title=book.title, username=user)
-            db.add(reviewtable)
-            db.commit()
+            title = book.title
+            user = review(
+                isbn=isbn,
+                review=reviews,
+                rating=rating,
+                time_stamp=timestamp,
+                title=title,
+                username=username,
+            )
+            db.session.add(user)
+            db.session.commit()
 
-            # Get all the reviews for the given book.
-            allreviews = review.query.filter_by(isbn=isbn).all()
-            return render_template("bookDetails.html", res=res, book=data, review=allreviews, property="none", message="You reviewed this book!!", user=user)
-        else:
-            # database query to check if the user had given review to that paticular book.
-            rev = db.query(review).filter(review.isbn.like(
-                isbn), review.username.like(user)).first()
-            # print(rev)
-
-            # Get all the reviews for the given book.
             allreviews = db.query(review).filter_by(isbn=isbn).all()
+            rew = []
+            timeStamp = []
+            usr = []
+            for rev in allreviews:
+                rew.append(rev.review)
+                timeStamp.append(rev.time_stamp)
+                usr.append(rev.username)
 
-            # if review was not given then dispaly the book page with review button
-            if rev is None:
-                return render_template("bookDetails.html", book=book, res=res, review=allreviews, user=user)
-            return render_template("bookDetails.html", book=book, message="You reviewed this book!!", review=allreviews, res=res, property="none", user=user)
-    else:
-        flash('please login first', 'warning')
-        return redirect(url_for('index'))
+            dict = {
+                "isbn": isbn,
+                "review": rew,
+                "time_stamp": timeStamp,
+                "username": usr,
+                "message": "You reviewed this book.",
+            }
+
+            return jsonify(dict), 200
+        else:
+            dict = {"message": "You already reviewed this book."}
+            return jsonify(dict), 200
+
+

@@ -1,34 +1,66 @@
 {% extends "layout.html" %} {% block title %}Home{% endblock %} {%block body%}
-<form action="{{url_for('search',user=user) }}" method="post" class="d-flex justify-content-center col-6 m-auto">
-    <input class="form-control" name=data type="search" placeholder="Search" aria-label="Search">
-    <button class="btn btn-outline-info search" type="submit">Search</button>
+<form action='#' name='res' class="d-flex justify-content-center col-6 m-auto">
+    <input class="form-control" name='find' type="search" placeholder="Search" aria-label="Search">
+    <button class="btn btn-outline-info search" type="submit" onclick="loadDoc()">Search</button>
 </form>
-{% if result %}
-<table class="table text-center text-capitalize mt-5">
-    <thead class="table-dark">
-        <tr>
-            <th scope="col">Book</th>
-            <th scope="col">ISBN</th>
-            <th scope="col">Title</th>
-            <th scope="col">Author</th>
-            <th scope="col">Year</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for r in result %}
-        <tr>
-            <th scope="row"><img src="http://covers.openlibrary.org/b/isbn/{{r.isbn}}-M.jpg" alt={{r.isbn}} width="100"
-                    height="150"></th>
-            <td> <a href="{{url_for('bookDetails',isbn=r.isbn,user=user)}}">{{r.isbn}}</a></td>
-            <td>{{r.title}}</td>
-            <td>{{r.author}}</td>
-            <td>{{r.year}}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% endif %}
-{% if result == [] %}
-<h1 class="mt-5">No results found</h1>
-{% endif %}
+<div class="hide-table" style="display: none;">
+    <h3 style="margin:20px;">Search Results</h3>
+    <table style="text-align: center;" class="table">
+        <thead class="thead-dark">
+            <tr id="search">
+                <th scope="col">Book</th>
+                <th scope="col" id="isbn">Isbn</th>
+                <th scope="col">Title</th>
+                <th scope="col">Author</th>
+                <th scope="col">Year</th>
+            </tr>
+        </thead>
+        <tbody id="tb">
+        </tbody>
+    </table>
+</div>
+<h1 id="username" name="userName" style="display: none;">{{user}}</h1>
+<div class="container" style="display: none;">
+    <div class="clearfix"></div>
+
+    <div>
+        <div style="display: none;" class="reviews">
+            <div class="container">
+                <form name="userRating">
+                    <div class="rate">
+                        <h4 class="starhead">Rating</h4>
+
+                        <input type="radio" id="star5" name="rating" value="5" />
+                        <label for="star5" title="text">5 stars</label>
+                        <input type="radio" id="star4" name="rating" value="4" />
+                        <label for="star4" title="text">4 stars</label>
+                        <input type="radio" id="star3" name="rating" value="3" />
+                        <label for="star3" title="text">3 stars</label>
+                        <input type="radio" id="star2" name="rating" value="2" />
+                        <label for="star2" title="text">2 stars</label>
+                        <input type="radio" id="star1" name="rating" value="1" />
+                        <label for="star1" title="text">1 star</label>
+                    </div>
+
+                    <div id="text" class="row">
+                        <div class="col-75">
+                            <textarea id="Review" name="review" placeholder="Write your review.."
+                                style="height: 200px;"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <button class="bttn" type="submit" onclick="submitReview()">
+                            Submit
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="reviews1"></div>
+    </div>
+</div>
+</div>
+
 {% endblock %}
