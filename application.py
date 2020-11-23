@@ -2,6 +2,8 @@ import os
 import csv
 import time
 from flask import Flask, render_template, request, redirect, flash, url_for, session
+import sys
+print(sys.path)
 from flask_session import Session
 from sqlalchemy import create_engine, or_
 from sqlalchemy.orm import scoped_session, sessionmaker
