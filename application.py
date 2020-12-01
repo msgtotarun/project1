@@ -166,7 +166,7 @@ def search(user):
 
 @ app.route("/bookDetails/<user>/<isbn>", methods=["POST", "GET"])
 def bookDetails(user, isbn):
-    if user is session["Username"]:
+    # if user is session["Username"]:
         data = requests.get("https://www.goodreads.com/book/review_counts.json",
                             params={"key": "QBSkzdFzmInWGWMpZCDycg", "isbns": isbn})
         book = db.query(books).filter_by(isbn=isbn).first()
@@ -206,6 +206,6 @@ def bookDetails(user, isbn):
             if rev is None:
                 return render_template("bookDetails.html", book=book, res=res, review=allreviews, user=user)
             return render_template("bookDetails.html", book=book, message="You reviewed this book!!", review=allreviews, res=res, property="none", user=user)
-    else:
-        flash('please login first', 'warning')
-        return redirect(url_for('index'))
+    # else:
+    #     flash('please login first', 'warning')
+    #     return redirect(url_for('index'))
