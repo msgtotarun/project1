@@ -3,7 +3,6 @@ import csv
 import time
 from flask import Flask, render_template, request, redirect, flash, url_for, session
 import sys
-print(sys.path)
 from flask_session import Session
 from sqlalchemy import create_engine, or_
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -43,6 +42,7 @@ def index():
 @app.route("/home/<user>")
 def userHome(user):
     if 'Username' in session:
+        
         return render_template('index.html', user=user)
     return redirect(url_for('login'))
 
@@ -232,14 +232,14 @@ def book_api():
         return jsonify(dict), 200
 
 
-@app.route("/api/submit_review/", methods=["POST"])
-def review_api():
+@app.route("/api/submit_review/<user>", methods=["POST"])
+def review_api(user):
     if request.method == "POST":
 
         var = request.json
         # print("-------------------", var)
         isbn = var["isbn"]
-        username = var["username"]
+        username = user
         rating = var["rating"]
         reviews = var["reviews"]
         print(isbn, username, rating, reviews)
@@ -263,7 +263,7 @@ def review_api():
 
             try:
                 # bring the book details
-                book = books.query.filter_by(isbn=isbn).first()
+                book = db.query(books).filter_by(isbn=isbn).first()
                 print("book", str(book))
             except:
                 message = "Enter valid ISBN"
@@ -279,8 +279,8 @@ def review_api():
                 title=title,
                 username=username,
             )
-            db.session.add(user)
-            db.session.commit()
+            db.add(user)
+            db.commit()
 
             allreviews = db.query(review).filter_by(isbn=isbn).all()
             rew = []

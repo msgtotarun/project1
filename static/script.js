@@ -282,17 +282,18 @@ function bookPage(isbn) {
 function submitReview(isbn) {
   rating = document.forms["userRating"]["rating"].value;
   rev = document.forms["userRating"]["review"].value;
-  console.log(username);
+  user=document.getElementById('username').innerHTML;
+  console.log(user);
   console.log(bookisbn);
   console.log(rating);
   console.log(rev);
 
   let request = new XMLHttpRequest();
-  request.open("POST", "/api/submit_review/");
+  request.open("POST", `/api/submit_review/${user}`);
   request.setRequestHeader("Content-Type", "application/json");
   request.send(
     JSON.stringify({
-      username: username,
+      username: user,
       isbn: bookisbn,
       rating: rating,
       reviews: rev,
@@ -301,7 +302,7 @@ function submitReview(isbn) {
   request.onload = () => {
     if (request.status === 200) {
       var data = JSON.parse(request.responseText);
-      console.log(data);
+      console.log(data["username"]);
       setTimeout(function () {}, 2000);
 
       var msg = "";
