@@ -13,6 +13,7 @@ data = []
 app = Flask(__name__)
 if __name__ == '__main__':
     app.run()
+db.init_app(app) 
 
 # Check for environment variable
 if not os.getenv("DATABASE_URL"):
@@ -24,8 +25,8 @@ Session(app)
 
 # Set up database
 engine = create_engine(os.getenv("DATABASE_URL"))
-db = scoped_session(sessionmaker(bind=engine))
 
+db = scoped_session(sessionmaker(bind=engine))
 user = ''
 
 
@@ -166,7 +167,8 @@ def search(user):
 
 @ app.route("/bookDetails/<user>/<isbn>", methods=["POST", "GET"])
 def bookDetails(user, isbn):
-    # if user is session["Username"]:
+    
+    if 'Username' in session:
         data = requests.get("https://www.goodreads.com/book/review_counts.json",
                             params={"key": "QBSkzdFzmInWGWMpZCDycg", "isbns": isbn})
         book = db.query(books).filter_by(isbn=isbn).first()
@@ -189,9 +191,9 @@ def bookDetails(user, isbn):
                                  time_stamp=timestamp, title=book.title, username=user)
             db.add(reviewtable)
             db.commit()
-
+            print('commited review')
             # Get all the reviews for the given book.
-            allreviews = review.query.filter_by(isbn=isbn).all()
+            allreviews = db.query(review).filter_by(isbn=isbn).all()
             return render_template("bookDetails.html", res=res, book=data, review=allreviews, property="none", message="You reviewed this book!!", user=user)
         else:
             # database query to check if the user had given review to that paticular book.
@@ -206,6 +208,6 @@ def bookDetails(user, isbn):
             if rev is None:
                 return render_template("bookDetails.html", book=book, res=res, review=allreviews, user=user)
             return render_template("bookDetails.html", book=book, message="You reviewed this book!!", review=allreviews, res=res, property="none", user=user)
-    # else:
-    #     flash('please login first', 'warning')
-    #     return redirect(url_for('index'))
+    else:
+        flash('please login first', 'warning')
+        return redirect(url_for('index'))
