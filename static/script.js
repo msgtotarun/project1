@@ -302,13 +302,13 @@ function submitReview(isbn) {
   request.onload = () => {
     if (request.status === 200) {
       var data = JSON.parse(request.responseText);
-      console.log(data["username"]);
+      console.log(data["username"][0]);
       setTimeout(function () {}, 2000);
 
       var msg = "";
       var flag = false;
       for (let i = 0; i < data["username"].length; i++) {
-        if (data["username"][i] === usr) {
+        if (data["username"][i] === user) {
           msg = "You have already reviewed this book. ";
           let reviewSection = document.querySelector(".reviews");
           reviewSection.style.display = "none";
