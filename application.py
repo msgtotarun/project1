@@ -72,7 +72,10 @@ def admin(user):
     flash('please login with admin account', 'warning')
     return redirect(url_for('userHome', user=user))
 
-
+@app.after_request
+def after_request(response):
+    response.headers['Cache-Control']='no-cache,no-store,must-revalidate'
+    return response
 @ app.route("/registration", methods=["POST"])
 def registration():
     if 'Username' not in session:
